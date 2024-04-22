@@ -77,85 +77,85 @@ dataset = CustomImageDataset(root_dir=dataset_path, transform=transform)
 label_counts = dataset.get_label_counts()
 print(dataset.label_to_idx)
 # Print the counts
-# for label, count in label_counts.items():
-#     print(f"Label '{label}' has {count} images.")
+ for label, count in label_counts.items():
+     print(f"Label '{label}' has {count} images.")
 
-# # Splitting the dataset into training and validation
-# val_size = int(0.1 * len(dataset))
-# train_size = len(dataset) - val_size
-# train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
+ # Splitting the dataset into training and validation
+ val_size = int(0.1 * len(dataset))
+ train_size = len(dataset) - val_size
+ train_dataset, val_dataset = random_split(dataset, [train_size, val_size])
 
-# train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
-# val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
+ train_loader = DataLoader(train_dataset, batch_size=64, shuffle=True)
+ val_loader = DataLoader(val_dataset, batch_size=64, shuffle=False)
 
 
-# # Model setup
-# device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-# model = timm.create_model("resnet152", pretrained=True, num_classes=len(dataset.label_to_idx))
-# model.to(device)
+ # Model setup
+ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+ model = timm.create_model("resnet152", pretrained=True, num_classes=len(dataset.label_to_idx))
+ model.to(device)
 
-# loss_function = nn.CrossEntropyLoss()
-# optimizer = optim.Adam(model.parameters(), lr=0.001)
+ loss_function = nn.CrossEntropyLoss()
+ optimizer = optim.Adam(model.parameters(), lr=0.001)
 
-# # Training function
-# def train_model(model, train_loader, val_loader, loss_fn, optimizer, epochs=10, device=device):
-#     metrics_path = 'new_training_metrics.txt'
-#     with open(metrics_path, 'w') as f:
-#         f.write('Epoch,Train Loss,Train Accuracy,Train F1,Val Loss,Val Accuracy,Val F1\n')
+ # Training function
+ def train_model(model, train_loader, val_loader, loss_fn, optimizer, epochs=10, device=device):
+     metrics_path = 'new_training_metrics.txt'
+     with open(metrics_path, 'w') as f:
+         f.write('Epoch,Train Loss,Train Accuracy,Train F1,Val Loss,Val Accuracy,Val F1\n')
         
-#         for epoch in tqdm(range(epochs)):
-#             model.train()
-#             train_loss, train_correct, train_total = 0, 0, 0
-#             train_preds, train_targets = [], []
+         for epoch in tqdm(range(epochs)):
+             model.train()
+             train_loss, train_correct, train_total = 0, 0, 0
+             train_preds, train_targets = [], []
 
-#             train_pbar = tqdm(train_loader, desc=f'Epoch {epoch+1}/ Training', leave=False)
-#             for inputs, labels in train_pbar:
-#                 inputs, labels = inputs.to(device), labels.to(device)
-#                 optimizer.zero_grad()
-#                 outputs = model(inputs)
-#                 loss = loss_fn(outputs, labels)
-#                 loss.backward()
-#                 optimizer.step()
+             train_pbar = tqdm(train_loader, desc=f'Epoch {epoch+1}/ Training', leave=False)
+             for inputs, labels in train_pbar:
+                 inputs, labels = inputs.to(device), labels.to(device)
+                 optimizer.zero_grad()
+                 outputs = model(inputs)
+                 loss = loss_fn(outputs, labels)
+                 loss.backward()
+                 optimizer.step()
 
-#                 train_loss += loss.item()
-#                 _, preds = torch.max(outputs, 1)
-#                 train_correct += (preds == labels).sum().item()
-#                 train_total += labels.size(0)
-#                 train_preds.extend(preds.view(-1).cpu().numpy())
-#                 train_targets.extend(labels.view(-1).cpu().numpy())
+                 train_loss += loss.item()
+                 _, preds = torch.max(outputs, 1)
+                 train_correct += (preds == labels).sum().item()
+                 train_total += labels.size(0)
+                 train_preds.extend(preds.view(-1).cpu().numpy())
+                 train_targets.extend(labels.view(-1).cpu().numpy())
 
-#             train_accuracy = train_correct / train_total
-#             train_f1 = f1_score(train_targets, train_preds, average='weighted')
-#             train_loss /= len(train_loader)
+             train_accuracy = train_correct / train_total
+             train_f1 = f1_score(train_targets, train_preds, average='weighted')
+             train_loss /= len(train_loader)
 
-#             # Validation phase
-#             model.eval()
-#             val_loss, val_correct, val_total = 0, 0, 0
-#             val_preds, val_targets = [], []
-#             with torch.no_grad():
-#                 val_pbar = tqdm(val_loader, desc=f'Epoch {epoch+1}/ Validation', leave=False)
-#                 for inputs, labels in val_pbar:
-#                     inputs, labels = inputs.to(device), labels.to(device)
-#                     outputs = model(inputs)
-#                     loss = loss_fn(outputs, labels)
-#                     val_loss += loss.item()
-#                     _, preds = torch.max(outputs, 1)
-#                     val_correct += (preds == labels).sum().item()
-#                     val_total += labels.size(0)
-#                     val_preds.extend(preds.view(-1).cpu().numpy())
-#                     val_targets.extend(labels.view(-1).cpu().numpy())
+             # Validation phase
+             model.eval()
+             val_loss, val_correct, val_total = 0, 0, 0
+             val_preds, val_targets = [], []
+             with torch.no_grad():
+                 val_pbar = tqdm(val_loader, desc=f'Epoch {epoch+1}/ Validation', leave=False)
+                 for inputs, labels in val_pbar:
+                     inputs, labels = inputs.to(device), labels.to(device)
+                     outputs = model(inputs)
+                     loss = loss_fn(outputs, labels)
+                     val_loss += loss.item()
+                     _, preds = torch.max(outputs, 1)
+                     val_correct += (preds == labels).sum().item()
+                     val_total += labels.size(0)
+                     val_preds.extend(preds.view(-1).cpu().numpy())
+                     val_targets.extend(labels.view(-1).cpu().numpy())
 
-#             val_accuracy = val_correct / val_total
-#             val_f1 = f1_score(val_targets, val_preds, average='weighted')
-#             val_loss /= len(val_loader)
+             val_accuracy = val_correct / val_total
+             val_f1 = f1_score(val_targets, val_preds, average='weighted')
+             val_loss /= len(val_loader)
 
-#             # Writing metrics to file
-#             f.write(f'{epoch+1},{train_loss},{train_accuracy},{train_f1},{val_loss},{val_accuracy},{val_f1}\n')
-#             print(f'Epoch {epoch+1}: Train Loss: {train_loss}, Train Accuracy: {train_accuracy}, Train F1: {train_f1}, Val Loss: {val_loss}, Val Accuracy: {val_accuracy}, Val F1: {val_f1}')
+             # Writing metrics to file
+             f.write(f'{epoch+1},{train_loss},{train_accuracy},{train_f1},{val_loss},{val_accuracy},{val_f1}\n')
+             print(f'Epoch {epoch+1}: Train Loss: {train_loss}, Train Accuracy: {train_accuracy}, Train F1: {train_f1}, Val Loss: {val_loss}, Val Accuracy: {val_accuracy}, Val F1: {val_f1}')
 
-# train_model(model, train_loader, val_loader, loss_function, optimizer, epochs=10, device=device)
+ train_model(model, train_loader, val_loader, loss_function, optimizer, epochs=10, device=device)
 
-# model_save_path = 'new_resnet_152_trained_state_dict.pth'
+ model_save_path = 'new_resnet_152_trained_state_dict.pth'
 
-# # Save the model's state dictionary
-# torch.save(model.state_dict(), model_save_path)
+ # Save the model's state dictionary
+ torch.save(model.state_dict(), model_save_path)
